@@ -1,6 +1,11 @@
 require(RMySQL)
 require(utils)
 
+setwd("~/git/fts_article/")
+
+# Pretty basic check, but useful.
+if(!file.exists('pg1232.txt')) download.file('http://www.gutenberg.org/cache/epub/1232/pg1232.txt', 'pg1232.txt')
+
 # Horrible, but due to an issue when working with debugging in RStudio, some
 # connections halt
 all_cons <- dbListConnections(MySQL())
@@ -18,17 +23,17 @@ con <- dbConnect(MySQL(),
 
 fileConn<-file("output.txt")
 
-setwd("~/git/fts_article/")
-
 rawContent <- paste(readLines("pg1232.txt"), collapse = "\n")
 rawContent <- unlist(strsplit(rawContent, "\n[ \t\n]*\n"))
+
+# Just cleaning for test
+dbGetQuery(con,"DROP TABLE IF EXISTS bookContent;")
 
 # Limitation. Using FTS_DOC_ID 
 dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContent
                  (
                  FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, 
-                 bookid bigint, content text);
-")
+                 bookid bigint, content text); ")
 
 
 # This is not the best way to do so. Instead, you want to load into file. IDIOT.
@@ -58,9 +63,9 @@ sql <- "LOAD  DATA LOCAL INFILE \'output.txt\'
 rs <- dbGetQuery(con,sql)
 
 
-dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContent(content);
-")
+dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContent(content);")
 
+### Turning down the music
 dbDisconnect(con)
 close(fileConn)
 
