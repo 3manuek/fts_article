@@ -21,23 +21,45 @@ con <- dbConnect(MySQL(),
 ## check all connections have been closed
 # dbListConnections(MySQL())
 
-fileConn<-file("output.txt")
+loadfile <- 'output.txt'
+loadfileline <- 'outputLine.txt'
 
+fileConn<-file(loadfile)
+fileConnByLine<-file(loadfileline)
+
+
+# Raw content of the book by paragraph splitting 
 rawContent <- paste(readLines("pg1232.txt"), collapse = "\n")
 rawContent <- unlist(strsplit(rawContent, "\n[ \t\n]*\n"))
 
+# Raw content by line splitting
+rawContentByLine <- readLines("pg1232.txt")
+rawContentByLine <- unlist(strsplit(rawContentByLine, "\n[ \t\n]*\n"))
+
+
 # Just cleaning for test
 dbGetQuery(con,"DROP TABLE IF EXISTS bookContent;")
+dbGetQuery(con,"DROP TABLE IF EXISTS bookContentByLine;")
+
 
 # Limitation. Using FTS_DOC_ID 
 dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContent
                  (
-                 FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY, 
-                 bookid bigint, content text); ")
+                   FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
+                   bookid bigint, 
+                   content text
+                 ); ")
+
+dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
+                 (
+                   FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
+                   bookid bigint, 
+                   content text
+                 ); ")
 
 
 # This is not the best way to do so. Instead, you want to load into file. IDIOT.
-inserParagraph <- function (bookid, content) {
+insertParagraph <- function (bookid, content) {
   sql <- sprintf("insert into books_content
                (book_id, paragraph)
                values (%d, '%s');",
@@ -46,24 +68,42 @@ inserParagraph <- function (bookid, content) {
 
 }
 
+# bookid = 1 (no other books on this test at the moment)
 tableContent <- data.frame(gsub("\\n", "", rawContent), stringAsFactors=FALSE)
 tableContent <- cbind(1, tableContent )
-#tableContent <- cbind( seq(1,length(rawContent)), tableContent  )
+
+tableContentByLine <- data.frame(gsub("\\n", "", rawContentByLine), stringAsFactors=FALSE)
+tableContentByLine <- cbind(1, tableContentByLine )
+
 
 colnames(tableContent) <- c("bookid","content")
 tableContent <- tableContent[complete.cases(tableContent),]
 
-write.table(tableContent, file = "output.txt", col.names = FALSE, 
+colnames(tableContentByLine) <- c("bookid","content")
+# No need this as it has been clean before: tableContent <- tableContent[complete.cases(tableContent),]
+
+
+write.table(tableContent, file = loadfile, col.names = FALSE, 
             append = FALSE, quote = TRUE, qmethod = c("escape"),
             sep = "|", row.names = FALSE)
 
-sql <- "LOAD  DATA LOCAL INFILE \'output.txt\' 
-        INTO TABLE test.bookContent 
-        FIELDS TERMINATED BY \'|\' (bookid,content); "
+
+write.table(tableContentByLine, file = loadfileline, col.names = FALSE, 
+            append = FALSE, quote = TRUE, qmethod = c("escape"),
+            sep = "|", row.names = FALSE)
+
+
+sql <- paste("LOAD  DATA LOCAL INFILE \'",as.character(loadfile),"\'
+        INTO TABLE test.bookContent FIELDS TERMINATED BY \'|\' (bookid,content); ", sep = "")
+rs <- dbGetQuery(con,sql)
+
+sql <- paste("LOAD  DATA LOCAL INFILE \'", as.character(loadfileline),"\' 
+        INTO TABLE test.bookContentByLine FIELDS TERMINATED BY \'|\' (bookid,content); ", sep = "" )
 rs <- dbGetQuery(con,sql)
 
 
 dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContent(content);")
+dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContentByLine(content);")
 
 ### Turning down the music
 dbDisconnect(con)
