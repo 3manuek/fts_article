@@ -33,15 +33,119 @@ This R Markdown document is made interactive using Shiny. Unlike the more tradit
 
 > You only need to have a MySQL sandbox with the 5.7 version.
 
-## Inputs and Outputs
+## Moto of the article
+
+A couple of days ago one of our customers came up with a question regarding FTS over InnoDB engine. Althuogh the question
+is not entirely related with most of the content written here, I came up with the conclusion that FTS sometimes is a misunderstood feature.
+
+Both official documentation and articles are propagated over internet, however sometimes most of them lacks to answer the
+main questions and test cases. In order to follow a reproducible article, I used public available data sources (www.gutenberg.org).
+
+In order to show the effects off the field sizes on the ranking algorithms, you will see two main tables (bookContent and 
+bookContentByLine) which contains the books parsed by paragraph and by line respectively. You'll see the noise generated
+by the `QUERY EXPANSION` algorithm when phrases are too large, and that's why you see both tables.
+
+The current article has been developed using Shiny/R in order to allow you to see the effects of the algorithms.  
+
+Here is an example of how ranks differ among algorithms and field sizes using the word 'country':
+
+```
+set global innodb_ft_aux_table = 'test/bookContentByLine';
+ 
+SELECT  content, group_concat(it.POSITION) as positions, 
+        round(MATCH(content) AGAINST ("country" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)) as QERank, 
+        round(MATCH(content) AGAINST ("country*" IN BOOLEAN MODE)) as BooleanRank, 
+        length(content) as len 
+      FROM bookContentByLine bl join information_schema.INNODB_FT_INDEX_TABLE it 
+          ON (bl.FTS_DOC_ID = it.DOC_ID)  
+      WHERE  MATCH(content) AGAINST ("country" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) 
+          AND lower(it.WORD) like '%country%' group by FTS_DOC_ID ORDER BY 3 DESC LIMIT 10 ;
+
++---------------------------------------------------------------------------+-----------+--------+-------------+------+
+| content                                                                   | positions | QERank | BooleanRank | len  |
++---------------------------------------------------------------------------+-----------+--------+-------------+------+
+| "country may be ennobled, and under its auspices may be verified that"    | 1         |     54 |           4 |   70 |
+| "country, under a most excellent president, wherein all cities had their" | 1         |     53 |           4 |   73 |
+| "Again, the prince who holds a country differing in the above respects"   | 31        |     51 |           4 |   71 |
+| "country districts. As Lucca had five gates, he divided his own country"  | 1,63      |     51 |           8 |   72 |
+| "inflicting immense damage upon the country. Whereupon the Florentines"   | 36        |     50 |           4 |   71 |
+| "The cities of Germany are absolutely free, they own but little country"  | 64        |     49 |           4 |   72 |
+| "citizens of Fermo, to whom the slavery of their country was dearer than" | 49        |     48 |           4 |   73 |
+| "is useful in two ways. Firstly, he learns to know his country, and"      | 55        |     46 |           4 |   68 |
+| "agree that he should retain any lordship over the country. Because the"  | 51        |     45 |           4 |   72 |
+| "his own parts of the country, according to the authority he had assumed" | 22        |     43 |           4 |   73 |
++---------------------------------------------------------------------------+-----------+--------+-------------+------+
+
+
+node1 [localhost] {msandbox} (test) > set global innodb_ft_aux_table = 'test/bookContent';
+Query OK, 0 rows affected (0,00 sec)
+
+node1 [localhost] {msandbox} (test) > SELECT FTS_DOC_ID, group_concat(it.POSITION) as positions, round(MATCH(content) AGAINST ("country" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)) as QERank, round(MATCH(content) AGAINST ("country*" IN BOOLEAN MODE)) as BooleanRank, length(content) as len FROM bookContent bl join information_schema.INNODB_FT_INDEX_TABLE it ON (bl.FTS_DOC_ID = it.DOC_ID)  WHERE  MATCH(content) AGAINST ("country" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) AND lower(it.WORD) like '%country%' group by FTS_DOC_ID ORDER BY QERank DESC LIMIT 10 ;
++------------+------------------+--------+-------------+------+
+| FTS_DOC_ID | positions        | QERank | BooleanRank | len  |
++------------+------------------+--------+-------------+------+
+|        757 | 6858             |   2804 |           1 | 8101 |
+|        735 | 2842             |    925 |           1 | 3133 |
+|        157 | 747              |    698 |           1 | 2385 |
+|        733 | 265,1342,816,750 |    569 |           2 | 1765 |
+|        739 | 1171             |    540 |           1 | 1659 |
+|        249 | 197,739          |    435 |           1 | 1368 |
+|        279 | 664              |    428 |           1 | 1365 |
+|        411 | 468,410          |    396 |           2 | 1170 |
+|        155 | 31,495,158,525   |    363 |           5 | 1378 |
+|        327 | 60               |    362 |           1 | 1372 |
++------------+------------------+--------+-------------+------+
+10 rows in set (4,09 sec)
+```
+
+
+```{r, message=FALSE, echo=FALSE}
+sql <- "SELECT avg(length(content)) as len from bookContent"
+rs <- dbGetQuery(con,sql)
+```
+
+Following stats are from the bookContent table (which has an average length of `r rs$len` characters )
+
+```
+node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT_INDEX_TABLE WHERE DOC_ID = 733 AND lower(WORD) like '%country%';
++------------------+--------------+-------------+-----------+--------+----------+
+| WORD             | FIRST_DOC_ID | LAST_DOC_ID | DOC_COUNT | DOC_ID | POSITION |
++------------------+--------------+-------------+-----------+--------+----------+
+| country          |          149 |         787 |        28 |    733 |      265 |
+| country          |          149 |         787 |        28 |    733 |     1342 |
+| countrydistricts |          733 |         733 |         1 |    733 |      816 |
+| thecountry       |          249 |         733 |         2 |    733 |      750 |
++------------------+--------------+-------------+-----------+--------+----------+
+4 rows in set (0,08 sec)
+
+node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT_INDEX_TABLE WHERE DOC_ID = 155 AND lower(WORD) like '%country%';
++---------+--------------+-------------+-----------+--------+----------+
+| WORD    | FIRST_DOC_ID | LAST_DOC_ID | DOC_COUNT | DOC_ID | POSITION |
++---------+--------------+-------------+-----------+--------+----------+
+| country |          149 |         787 |        28 |    155 |       31 |
+| country |          149 |         787 |        28 |    155 |      495 |
+| country |          149 |         787 |        28 |    155 |      158 |
+| country |          149 |         787 |        28 |    155 |      525 |
++---------+--------------+-------------+-----------+--------+----------+
+4 rows in set (0,09 sec)
+
+```
+
+> In the example shown before the is no intention to compare ranks score as they are based in different algorithms. 
+> The idea there is to show that QUERY EXPANSION can have non desire results in some cases due to its mechanism.
+
+
+## Playing with searches
+
 
 You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
 
 ```{r, echo=TRUE}
         ui <- shinyUI(fluidPage(
                 mainPanel(textInput("filtering", "FTS Filter:", ""),
-                          submitButton("Plot!"),
-                          plotOutput("plot")
+                          submitButton("Stats!"),
+                          #plotOutput("plot")
+                          uiOutput('table')
                           )
         ))
         server <- function(input, output, session) {
@@ -82,8 +186,16 @@ GROUP BY sourceTable
                         #rs
                         #x<-1:10
                         
+                        output$table <- renderTable({
+                            if (is.null(Data())) {return()}
+                            print(Data()$rs)
+                          }, 'include.rownames' = FALSE
+                           , 'include.colnames' = TRUE
+                           , 'sanitize.text.function' = function(x){x}
+                        )
+                        
                         #pairs(rs$sourceTable + rs$weight, data = rs)
-                        pairs(rs[,2:10])
+                        #pairs(rs[,2:10])
                         # plot(x,f(x))
                 }                        
                 )              
