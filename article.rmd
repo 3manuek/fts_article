@@ -44,14 +44,16 @@ You can embed Shiny inputs and outputs in your document. Outputs are automatical
         server <- function(input, output, session) {
                 output$plot<-renderPlot({
                         f<-function(x) {as.character(input$filtering)}
-                        sql <- paste("SELECT source, sum(scoreBoolean), sum(scoreQE),
+                        
+                        sql <- paste("SELECT sourceTable, sum(scoreBoolean), sum(scoreQE),
         max(scoreBoolean),max(scoreQE),
         avg(scoreBoolean), avg(scoreQE),
         avg(lengthContent),
-        count(source)
+        avg(scoreQE) / count(sourceTable) as weight,
+        count(sourceTable)
 FROM
 (
-SELECT \"BC\" as source, FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
+SELECT \"BC\" as sourceTable, FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
        match(BC.content) against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
        length(content) as lengthContent
 FROM
@@ -59,7 +61,7 @@ FROM
 WHERE
   match(BC.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
 UNION
-SELECT \"BL\" as source, FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
+SELECT \"BL\" as sourceTable, FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
        match(BL.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
        length(content) as lengthContent
 FROM
@@ -67,11 +69,14 @@ FROM
 WHERE
   match(BL.content) against (\"", f(x) ,"\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
 ) unionTable
-GROUP BY source
+GROUP BY sourceTable
 ;" , sep = "")
                         rs <- dbGetQuery(con, sql)
-                        rs
-                        x<-1:10
+                        #rs
+                        #x<-1:10
+                        
+                        #pairs(rs$sourceTable + rs$weight, data = rs)
+                        pairs(rs[,2:10])
                         # plot(x,f(x))
                 }                        
                 )              

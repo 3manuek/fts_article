@@ -302,6 +302,7 @@ SELECT source, sum(scoreBoolean), sum(scoreQE),
         max(scoreBoolean),max(scoreQE),
         avg(scoreBoolean), avg(scoreQE),
         avg(lengthContent),
+        avg(scoreQE) / count(source) as weigth ,
         count(source)
 FROM
 (
