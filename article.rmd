@@ -21,6 +21,8 @@ con <- dbConnect(MySQL(),
                  user="msandbox", password="msandbox", port=14901 
                  ,dbname="test", socket="/tmp/mysql_sandbox14901.sock", 
                  host="127.0.0.1")
+
+
 ```
 
 This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately.  To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
@@ -32,7 +34,7 @@ This R Markdown document is made interactive using Shiny. Unlike the more tradit
 
 You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
 
-```{r, echo=FALSE}
+```{r, echo=TRUE}
         ui <- shinyUI(fluidPage(
                 mainPanel(textInput("filtering", "FTS Filter:", ""),
                           submitButton("Plot!"),
@@ -41,9 +43,36 @@ You can embed Shiny inputs and outputs in your document. Outputs are automatical
         ))
         server <- function(input, output, session) {
                 output$plot<-renderPlot({
-                        f<-function(x) {eval(parse(text=input$filtering))}
+                        f<-function(x) {as.character(input$filtering)}
+                        sql <- paste("SELECT source, sum(scoreBoolean), sum(scoreQE),
+        max(scoreBoolean),max(scoreQE),
+        avg(scoreBoolean), avg(scoreQE),
+        avg(lengthContent),
+        count(source)
+FROM
+(
+SELECT \"BC\" as source, FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
+       match(BC.content) against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+       length(content) as lengthContent
+FROM
+        bookContent BC
+WHERE
+  match(BC.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+UNION
+SELECT \"BL\" as source, FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
+       match(BL.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+       length(content) as lengthContent
+FROM
+        bookContentByLine BL
+WHERE
+  match(BL.content) against (\"", f(x) ,"\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+) unionTable
+GROUP BY source
+;" , sep = "")
+                        rs <- dbGetQuery(con, sql)
+                        rs
                         x<-1:10
-                        plot(x,f(x))
+                        # plot(x,f(x))
                 }                        
                 )              
         }

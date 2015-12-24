@@ -1,6 +1,17 @@
 
 
 ```
+CREATE TABLE `bookContent` (
+  `paragraphid` bigint(20) UNSIGNED PRIMARY KEY,
+  `FTS_DOC_ID` bigint(20) UNSIGNED AUTO_INCREMENT,
+  `bookid` bigint(20) DEFAULT NULL,
+  `content` text
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+```
+
+
+```
 node1 [localhost] {msandbox} (test) > show create table bookContent;
 +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Table       | Create Table                                                                                                                                                      |
@@ -287,8 +298,43 @@ node1 [localhost] {msandbox} (test) > select group_concat(value) from informatio
 
 
 
+SELECT source, sum(scoreBoolean), sum(scoreQE),
+        max(scoreBoolean),max(scoreQE),
+        avg(scoreBoolean), avg(scoreQE),
+        avg(lengthContent),
+        count(source)
+FROM
+(
+SELECT "BC" as source, FTS_DOC_ID, match(BC.content) against ("find" IN BOOLEAN MODE) as scoreBoolean,
+       match(BC.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+       length(content) as lengthContent
+FROM
+        bookContent BC
+WHERE
+  match(BC.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+UNION
+SELECT "BL" as source, FTS_DOC_ID, match(BL.content) against ("find" IN BOOLEAN MODE) as scoreBoolean,
+       match(BL.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+       length(content) as lengthContent
+FROM
+        bookContentByLine BL
+WHERE
+  match(BL.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+) unionTable
+GROUP BY source
+;
 
 
+
+SELECT match(BC.content) against ("find" IN BOOLEAN MODE) as scoreBoolean,
+       match(BC.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+       match(BL.content) against ("find" IN BOOLEAN MODE) as scoreBooleanBL,
+       match(BL.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQELine
+FROM
+  bookContent BC,
+  bookContentByLine BL
+WHERE
+  match(BL.content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION);
 
 
 node1 [localhost] {msandbox} (test) >  select group_concat(FTS_DOC_ID), group_concat(it.WORD), count(*) , match(content) against ("find" IN BOOLEAN MODE) as scoreBoolean,  match(content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreNatural from bookContent bc join information_schema.INNODB_FT_INDEX_TABLE it ON (bc.FTS_DOC_ID = it.DOC_ID) where match(content) against ("find" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) and WORD IN ('find','finding','found','findings') group by  WORD, FTS_DOC_ID order by scoreNatural DESC,  FTS_DOC_ID, WORD;
