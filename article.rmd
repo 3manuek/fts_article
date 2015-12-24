@@ -9,6 +9,9 @@ runtime: shiny
 ```{r init, message = FALSE, echo=FALSE}
 library(shiny)
 require(RMySQL)
+library(ggplot2)
+
+
 source('~/git/fts_article/load.R')
 
 # Yeah, only for development environements
@@ -45,12 +48,16 @@ You can embed Shiny inputs and outputs in your document. Outputs are automatical
                 output$plot<-renderPlot({
                         f<-function(x) {as.character(input$filtering)}
                         
-                        sql <- paste("SELECT sourceTable, sum(scoreBoolean), sum(scoreQE),
-        max(scoreBoolean),max(scoreQE),
-        avg(scoreBoolean), avg(scoreQE),
-        avg(lengthContent),
+                        sql <- paste("SELECT sourceTable, 
+        sum(scoreBoolean) as sumBoolean, 
+        sum(scoreQE) as sumQE,
+        max(scoreBoolean) as maxBoolean,
+        max(scoreQE) as maxBoolean,
+        avg(scoreBoolean) as avgBoolean, 
+        avg(scoreQE) as avgQE,
+        avg(lengthContent) avgLength,
         avg(scoreQE) / count(sourceTable) as weight,
-        count(sourceTable)
+        count(sourceTable) as countOccurrences
 FROM
 (
 SELECT \"BC\" as sourceTable, FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
