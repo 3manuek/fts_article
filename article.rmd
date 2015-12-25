@@ -1,5 +1,5 @@
 ---
-title: "article"
+title: "Full text search hack with Shiny/R"
 author: "Emanuel Calvo"
 date: "December 22, 2015"
 output: html_document
@@ -7,6 +7,10 @@ runtime: shiny
 ---
 
 ```{r init, message = FALSE, echo=FALSE}
+options(width = 9999)
+knitr::opts_chunk$set(width=9999)
+
+library(knitr)
 library(shiny)
 require(RMySQL)
 library(ggplot2)
@@ -37,6 +41,8 @@ This R Markdown document is made interactive using Shiny. Unlike the more tradit
 
 A couple of days ago one of our customers came up with a question regarding FTS over InnoDB engine. Althuogh the question
 is not entirely related with most of the content written here, I came up with the conclusion that FTS sometimes is a misunderstood feature.
+
+The point of this article will be clarify when each algorithm fits in each situation.  
 
 Both official documentation and articles are propagated over internet, however sometimes most of them lacks to answer the
 main questions and test cases. In order to follow a reproducible article, I used public available data sources (www.gutenberg.org).
@@ -98,13 +104,16 @@ node1 [localhost] {msandbox} (test) > SELECT FTS_DOC_ID, group_concat(it.POSITIO
 10 rows in set (4,09 sec)
 ```
 
+As we can observ on the previous examples, the query extension algorithm has some noisy produced by the double query
+generated in order to join  the results.  
+
 
 ```{r, message=FALSE, echo=FALSE}
 sql <- "SELECT avg(length(content)) as len from bookContent"
 rs <- dbGetQuery(con,sql)
 ```
 
-Following stats are from the bookContent table (which has an average length of `r rs$len` characters )
+Following stats are from the bookContent table (which has an average length of `r rs$len` characters ).
 
 ```
 node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT_INDEX_TABLE WHERE DOC_ID = 733 AND lower(WORD) like '%country%';
@@ -138,70 +147,70 @@ node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT
 ## Playing with searches
 
 
-You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
+The following form will allow you to search across the stats over the tables
+of the filtering provided dynamically. 
 
-```{r, echo=TRUE}
+Keep in mind that the numbers are not meaningful as we can't compare rankings
+between `query extension` and `boolean`. 
+
+```{r, echo=FALSE}
         ui <- shinyUI(fluidPage(
-                mainPanel(textInput("filtering", "FTS Filter:", ""),
+                mainPanel(textInput("filtering", "FTS Filter:", "default"),
                           submitButton("Stats!"),
-                          #plotOutput("plot")
                           uiOutput('table')
                           )
         ))
+
         server <- function(input, output, session) {
-                output$plot<-renderPlot({
-                        f<-function(x) {as.character(input$filtering)}
+                 
+                Data = reactive({
+                  f<-function(x) {as.character(input$filtering)}
+                  
+                      sql <- paste("SELECT sourceTable, 
+                                      sum(scoreBoolean) as sumBoolean, 
+                                      sum(scoreQE) as sumQE,
+                                      max(scoreBoolean) as maxBoolean,
+                                      max(scoreQE) as maxBoolean,
+                                      avg(scoreBoolean) as avgBoolean, 
+                                      avg(scoreQE) as avgQE,
+                                      avg(lengthContent) avgLength,
+                                      avg(scoreQE) / count(sourceTable) as weight,
+                                      count(sourceTable) as countOccurrences
+                              FROM
+                              (
+                              SELECT \"byParagraph\" as sourceTable, 
+                                    FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
+                                     match(BC.content) 
+                                        against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+                                     length(content) as lengthContent
+                              FROM    bookContent BC
+                              WHERE
+                                match(BC.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+                              UNION
+                              SELECT \"byLine\" as sourceTable, 
+                                      FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
+                                     match(BL.content) 
+                                      against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+                                     length(content) as lengthContent
+                              FROM
+                                      bookContentByLine BL
+                              WHERE
+                                match(BL.content) against (\"", f(x) ,"\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+                              ) unionTable
+                              GROUP BY sourceTable
+                              ;" , sep = "")
+
+                      rs <- dbGetQuery(con, sql)
+                      return(rs)
+                      
+                })
                         
-                        sql <- paste("SELECT sourceTable, 
-        sum(scoreBoolean) as sumBoolean, 
-        sum(scoreQE) as sumQE,
-        max(scoreBoolean) as maxBoolean,
-        max(scoreQE) as maxBoolean,
-        avg(scoreBoolean) as avgBoolean, 
-        avg(scoreQE) as avgQE,
-        avg(lengthContent) avgLength,
-        avg(scoreQE) / count(sourceTable) as weight,
-        count(sourceTable) as countOccurrences
-FROM
-(
-SELECT \"BC\" as sourceTable, FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
-       match(BC.content) against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
-       length(content) as lengthContent
-FROM
-        bookContent BC
-WHERE
-  match(BC.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
-UNION
-SELECT \"BL\" as sourceTable, FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
-       match(BL.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
-       length(content) as lengthContent
-FROM
-        bookContentByLine BL
-WHERE
-  match(BL.content) against (\"", f(x) ,"\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
-) unionTable
-GROUP BY sourceTable
-;" , sep = "")
-                        rs <- dbGetQuery(con, sql)
-                        #rs
-                        #x<-1:10
-                        
-                        output$table <- renderTable({
-                            if (is.null(Data())) {return()}
-                            print(Data()$rs)
-                          }, 'include.rownames' = FALSE
-                           , 'include.colnames' = TRUE
-                           , 'sanitize.text.function' = function(x){x}
-                        )
-                        
-                        #pairs(rs$sourceTable + rs$weight, data = rs)
-                        #pairs(rs[,2:10])
-                        # plot(x,f(x))
-                }                        
-                )              
+                        output$table <- renderTable({Data()})
+                                
         }
 
 shinyApp(ui = ui, server = server)
+
 ```
 
 Template
