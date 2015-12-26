@@ -7,8 +7,8 @@ runtime: shiny
 ---
 
 ```{r init, message = FALSE, echo=FALSE}
-options(width = 9999)
-knitr::opts_chunk$set(width=9999)
+#options(width = 9999)
+#knitr::opts_chunk$set(width=9999)
 
 library(knitr)
 library(shiny)
@@ -16,7 +16,7 @@ require(RMySQL)
 library(ggplot2)
 
 
-source('~/git/fts_article/load.R')
+source('~/fts_article/load.R')
 
 # Yeah, only for development environements
 all_cons <- dbListConnections(MySQL())

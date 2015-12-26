@@ -16,11 +16,12 @@ parser <- OptionParser()
 #parser <- add_option(parser, c("-q", "--quietly"), action="store_false",
 #                                            dest="verbose", help="Print little output")
 parser <- add_option(parser, c("-b", "--books"), type="integer", default=5,
-                                        help="Number of books to download [default %default]",
-                                        metavar="randnums")
+                                        help="Number of books to download [default %default]")
+                                        #metavar="randnums")
 #parse_args(parser, args = c("--quietly", "--count=15"))
 opts <- parse_args(parser)
 
+numbooks <- opts$books
 
 # Probably adding more stuff here
 
@@ -71,7 +72,7 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
 #  download.file(tempFileName, paste('pg',randids[bi],'.txt', sep = ""))
 #}
 
-rest <- opts$books - length(dir(path = "./books",pattern = "pg.*txt"))
+rest <- numbooks - length(dir(path = "./books",pattern = "pg.*txt"))
 
 #for (bi in 1:opts$randnums) {
 #  tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
