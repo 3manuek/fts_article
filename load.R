@@ -18,7 +18,7 @@ parser <- add_option(parser, c("-b", "--books"), type="integer", default=5,
                                         help="Number of books to download [default %default]",
                                         metavar="randnums")
 #parse_args(parser, args = c("--quietly", "--count=15"))
-parse_args(parser)
+opts <- parse_args(parser)
 
 # Probably adding more stuff here
 
@@ -59,12 +59,12 @@ randids <- abs(round(rnorm(randnums)*1000))
 # How many downloaded books?
 rest <- randnums - length(dir(pattern = "pg.*txt"))
 
-for (bi in 1:randnums) {
+for (bi in 1:opts$randnums) {
   tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
                         ,randids[bi], 
                         '/pg',randids[bi],'.txt', sep = ""
                         )
-  if(!file.exists(tempFileName)) {next} 
+  if(file.exists(tempFileName)) {next} 
   download.file(tempfileName, paste('pg',randids[bi],'.txt'), sep = "")
 }
 
