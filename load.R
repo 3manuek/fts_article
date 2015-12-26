@@ -1,5 +1,6 @@
 require(RMySQL)
 require(utils)
+library(stringr)
 library(optparse) # https://github.com/trevorld/optparse
                   # devtools::install_github("trevorld/optparse")
 
@@ -8,7 +9,7 @@ set.seed(1)
 
 setwd("~/git/fts_article/")
 
-
+#parsing arguments for future purposes
 parser <- OptionParser()
 #parser <- add_option(parser, c("-v", "--verbose"), action="store_true",
 #                                        default=TRUE, help="Print extra output [default]")
@@ -19,10 +20,7 @@ parser <- add_option(parser, c("-b", "--books"), type="integer", default=5,
                                         metavar="randnums")
 #parse_args(parser, args = c("--quietly", "--count=15"))
 opts <- parse_args(parser)
-<<<<<<< HEAD
 
-=======
->>>>>>> 487fd798b3e2aa97a33f40bdf9e53d40d979d1a9
 
 # Probably adding more stuff here
 
@@ -73,7 +71,7 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
 #  download.file(tempFileName, paste('pg',randids[bi],'.txt', sep = ""))
 #}
 
-rest <- randnums - length(dir(pattern = "pg.*txt"))
+rest <- opts$books - length(dir(path = "./books",pattern = "pg.*txt"))
 
 #for (bi in 1:opts$randnums) {
 #  tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
@@ -92,22 +90,28 @@ rest <- randnums - length(dir(pattern = "pg.*txt"))
 ## check all connections have been closed
 # dbListConnections(MySQL())
 
-loadfile <- 'output'
-loadfileline <- 'outputLine'
+#loadfile <- 'output'
+#loadfileline <- 'outputLine'
 
-loadFiles <- paste('ouput' ,rids, sep = "")
-laodFilesLine <- paste('ouputLine' , rids, sep = "")
+#loadFiles <- paste('ouput' ,rids, sep = "")
+#loadFilesLine <- paste('ouputLine' , rids, sep = "")
 
-fileConn<-file(loadfile)
-fileConnByLine<-file(loadfileline)
+#fileConn<-file(loadfile)
+#fileConnByLine<-file(loadfileline)
 
-listOfDownloadedFiles <- sort(dir(path = "./books/", pattern = "pg.*txt"))
+listOfDownloadedFiles <- sort(dir(path = "./books", 
+                                  full.names = TRUE, pattern = "pg.*txt$"))
 
 for (fi in listOfDownloadedFiles) {
   
   downloadFile <- paste(fi, ".load",sep = "")
   downloadFileLine <- paste(fi, ".line.load",sep = "")
-  
+  idBook <- as.numeric(str_extract(fi,"[0-9]+"))
+  #fipath <- paste("./books/",fi,sep = "")
+
+  fileConn<-file(downloadFile)
+  fileConnByLine<-file(downloadFileLine)
+    
   # Raw content of the book by paragraph splitting 
   rawContent <- paste(readLines(fi), collapse = "\n")
   rawContent <- unlist(strsplit(rawContent, "\n[ \t\n]*\n"))
@@ -118,10 +122,10 @@ for (fi in listOfDownloadedFiles) {
   
   # bookid = 1 (no other books on this test at the moment)
   tableContent <- data.frame(gsub("\\n", "", rawContent), stringAsFactors=FALSE)
-  tableContent <- cbind(1, tableContent )
+  tableContent <- cbind(idBook, tableContent )
   
   tableContentByLine <- data.frame(gsub("\\n", "", rawContentByLine), stringAsFactors=FALSE)
-  tableContentByLine <- cbind(1, tableContentByLine )
+  tableContentByLine <- cbind(idBook, tableContentByLine )
 
   colnames(tableContent) <- c("bookid","content")
   tableContent <- tableContent[complete.cases(tableContent),]
@@ -138,6 +142,8 @@ for (fi in listOfDownloadedFiles) {
   write.table(tableContentByLine, file = downloadFileLine, col.names = FALSE, 
               append = FALSE, quote = TRUE, qmethod = c("escape"),
               sep = "|", row.names = FALSE)
+  close(fileConn)
+  close(fileConnByLine)
 }
 
 loadFiles <- function(loadFileName) {
@@ -154,21 +160,20 @@ loadFilesLine <- function(loadFileName){
   
 }
 
-listOfLoadFiles <- sort(dir(pattern = "pg.*txt.load"))
-listOfLoadFilesLine <- sort(dir(pattern = "pg.*txt.line.load"))
+listOfLoadFiles <- sort(dir(path = "./books",full.names = TRUE,pattern = "pg.*txt.load$"))
+listOfLoadFilesLine <- sort(dir(path = "./books",full.names = TRUE,pattern = "pg.*txt.line.load$"))
 
 sapply(listOfLoadFiles, loadFiles)
 sapply(listOfLoadFilesLine, loadFilesLine)
 
 # This is not the best way to do so. Instead, you want to load into file. IDIOT.
-insertParagraph <- function (bookid, content) {
-  sql <- sprintf("insert into books_content
-               (book_id, paragraph)
-               values (%d, '%s');",
-                 bookid, content)
-  rs <- dbSendQuery(con, sql)
-
-}
+#insertParagraph <- function (bookid, content) {
+#  sql <- sprintf("insert into books_content
+#               (book_id, paragraph)
+#               values (%d, '%s');",
+#                 bookid, content)
+#  rs <- dbSendQuery(con, sql)
+#}
 
 
 dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContent(content);")
@@ -176,7 +181,7 @@ dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContentByLine(content);
 
 ### Turning down the music
 dbDisconnect(con)
-close(fileConn)
+#close(fileConn)
 
 
 
