@@ -105,7 +105,12 @@ node1 [localhost] {msandbox} (test) > SELECT FTS_DOC_ID, group_concat(it.POSITIO
 ```
 
 As we can observ on the previous examples, the query extension algorithm has some noisy produced by the double query
-generated in order to join  the results.  
+generated in order to join  the results. Also, it won't matter if you have the exact match twice, as the algorithm does not
+focus on the exact matches, instead it will relate the occurrences on the first search (where the match happens) and the
+sencond (where the algorithm searches for the words that appear in the same phrase than the exact match). That means 
+that it is possible to have a high rank without have any matching occurrence. 
+
+This kind of searches is useful if you want to find entries with words that appear frequently within your search.
 
 
 ```{r, message=FALSE, echo=FALSE}
