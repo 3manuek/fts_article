@@ -19,7 +19,10 @@ parser <- add_option(parser, c("-b", "--books"), type="integer", default=5,
                                         metavar="randnums")
 #parse_args(parser, args = c("--quietly", "--count=15"))
 opts <- parse_args(parser)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 487fd798b3e2aa97a33f40bdf9e53d40d979d1a9
 
 # Probably adding more stuff here
 
@@ -58,6 +61,7 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
 #randids <- abs(round(rnorm(opts$books)*1000))
 
 # How many downloaded books?
+<<<<<<< HEAD
 #rest <- randnums - length(dir(pattern = "pg.*txt"))
 
 #for (bi in 1:opts$books) {
@@ -68,6 +72,18 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
 #  if(file.exists(tempFileName)) {next} 
 #  download.file(tempFileName, paste('pg',randids[bi],'.txt', sep = ""))
 #}
+=======
+rest <- randnums - length(dir(pattern = "pg.*txt"))
+
+for (bi in 1:opts$randnums) {
+  tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
+                        ,randids[bi], 
+                        '/pg',randids[bi],'.txt', sep = ""
+                        )
+  if(file.exists(tempFileName)) {next} 
+  download.file(tempfileName, paste('pg',randids[bi],'.txt'), sep = "")
+}
+>>>>>>> 487fd798b3e2aa97a33f40bdf9e53d40d979d1a9
 
 
 # Pretty basic check, but useful.
