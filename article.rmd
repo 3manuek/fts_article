@@ -1,5 +1,5 @@
 ---
-title: "Full text search hack with Shiny/R"
+title: "InnoDB Full text Search hacking with Shiny/R"
 author: "Emanuel Calvo"
 date: "December 22, 2015"
 output: html_document
@@ -15,8 +15,8 @@ library(shiny)
 require(RMySQL)
 library(ggplot2)
 
-
-source('~/fts_article/load.R')
+#Comment if you want to avoid reload all the data
+#source('~/fts_article/load.R')
 
 # Yeah, only for development environements
 all_cons <- dbListConnections(MySQL())
@@ -83,6 +83,27 @@ SELECT  content, group_concat(it.POSITION) as positions,
 +---------------------------------------------------------------------------+-----------+--------+-------------+------+
 
 
+```
+
+As we can observ on the previous examples, the query extension algorithm has some noisy produced by the double query
+generated in order to join  the results. Also, it won't matter if you have the exact match twice, as the algorithm does not
+focus on the exact matches, instead it will relate the occurrences on the first search (where the match happens) and the
+sencond (where the algorithm searches for the words that appear in the same phrase than the exact match). That means 
+that it is possible to have a high rank without have any exact matching occurrence.
+
+The interesting case is the following row, which has 2 exact occurrences and it is not the highest rank using query
+extension. Remember, this is expected.
+
+```
+| "country districts. As Lucca had five gates, he divided his own country"  | 1,63      |     51 |           8 |   72 |
+```
+
+Even worst when using large sentences. In the example bellow you will see the same query, against the table 
+storing by paragraph. The boolean rank shows some of the entries way above others, however the query extension
+locates at the top records that not necessarily has a lot of exact matches.
+
+```
+
 node1 [localhost] {msandbox} (test) > set global innodb_ft_aux_table = 'test/bookContent';
 Query OK, 0 rows affected (0,00 sec)
 
@@ -104,11 +125,6 @@ node1 [localhost] {msandbox} (test) > SELECT FTS_DOC_ID, group_concat(it.POSITIO
 10 rows in set (4,09 sec)
 ```
 
-As we can observ on the previous examples, the query extension algorithm has some noisy produced by the double query
-generated in order to join  the results. Also, it won't matter if you have the exact match twice, as the algorithm does not
-focus on the exact matches, instead it will relate the occurrences on the first search (where the match happens) and the
-sencond (where the algorithm searches for the words that appear in the same phrase than the exact match). That means 
-that it is possible to have a high rank without have any matching occurrence. 
 
 This kind of searches is useful if you want to find entries with words that appear frequently within your search.
 
@@ -121,7 +137,9 @@ rs <- dbGetQuery(con,sql)
 Following stats are from the bookContent table (which has an average length of `r rs$len` characters ).
 
 ```
-node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT_INDEX_TABLE WHERE DOC_ID = 733 AND lower(WORD) like '%country%';
+(test) > select * 
+          from information_schema.INNODB_FT_INDEX_TABLE 
+          WHERE DOC_ID = 733 AND lower(WORD) like '%country%';
 +------------------+--------------+-------------+-----------+--------+----------+
 | WORD             | FIRST_DOC_ID | LAST_DOC_ID | DOC_COUNT | DOC_ID | POSITION |
 +------------------+--------------+-------------+-----------+--------+----------+
@@ -132,7 +150,9 @@ node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT
 +------------------+--------------+-------------+-----------+--------+----------+
 4 rows in set (0,08 sec)
 
-node1 [localhost] {msandbox} (test) > select * from information_schema.INNODB_FT_INDEX_TABLE WHERE DOC_ID = 155 AND lower(WORD) like '%country%';
+(test) > select * 
+          from information_schema.INNODB_FT_INDEX_TABLE 
+          WHERE DOC_ID = 155 AND lower(WORD) like '%country%';
 +---------+--------------+-------------+-----------+--------+----------+
 | WORD    | FIRST_DOC_ID | LAST_DOC_ID | DOC_COUNT | DOC_ID | POSITION |
 +---------+--------------+-------------+-----------+--------+----------+
@@ -217,6 +237,12 @@ between `query extension` and `boolean`.
 shinyApp(ui = ui, server = server)
 
 ```
+
+
+Now that you can see the general stats, we'll see how much noise has been added with the query extension algorithm.
+To do that,  we'll gather all the occurrences using the query extension option and extract only the ones that match 
+with the occurrence.
+
 
 Template
 
