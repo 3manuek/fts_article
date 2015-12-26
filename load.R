@@ -3,7 +3,7 @@ require(utils)
 library(optparse) # https://github.com/trevorld/optparse
                   # devtools::install_github("trevorld/optparse")
 
-randnums <- 5
+#randnums <- 5
 set.seed(1)
 
 setwd("~/git/fts_article/")
@@ -18,7 +18,8 @@ parser <- add_option(parser, c("-b", "--books"), type="integer", default=5,
                                         help="Number of books to download [default %default]",
                                         metavar="randnums")
 #parse_args(parser, args = c("--quietly", "--count=15"))
-parse_args(parser)
+opts <- parse_args(parser)
+
 
 # Probably adding more stuff here
 
@@ -54,26 +55,23 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
                  ); ")
 
 #vector of ids for book downloading
-randids <- abs(round(rnorm(randnums)*1000))
+#randids <- abs(round(rnorm(opts$books)*1000))
 
 # How many downloaded books?
-rest <- randnums - length(dir(pattern = "pg.*txt"))
+#rest <- randnums - length(dir(pattern = "pg.*txt"))
 
-for (bi in 1:randnums) {
-  tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
-                        ,randids[bi], 
-                        '/pg',randids[bi],'.txt', sep = ""
-                        )
-  if(!file.exists(tempFileName)) {next} 
-  download.file(tempfileName, paste('pg',randids[bi],'.txt'), sep = "")
-}
+#for (bi in 1:opts$books) {
+#  tempFileName <- paste('http://www.gutenberg.org/cache/epub/' 
+#                        ,randids[bi], 
+#                        '/pg',randids[bi],'.txt', sep = ""
+#                        )
+#  if(file.exists(tempFileName)) {next} 
+#  download.file(tempFileName, paste('pg',randids[bi],'.txt', sep = ""))
+#}
 
 
 # Pretty basic check, but useful.
 #if(!file.exists(paste('pg', randids ,'.txt'))) download.file('http://www.gutenberg.org/cache/epub/1232/pg1232.txt', 'pg1232.txt')
-
-
-
 
 ## check all connections have been closed
 # dbListConnections(MySQL())
@@ -87,7 +85,7 @@ laodFilesLine <- paste('ouputLine' , rids, sep = "")
 fileConn<-file(loadfile)
 fileConnByLine<-file(loadfileline)
 
-listOfDownloadedFiles <- sort(dir(pattern = "pg.*txt"))
+listOfDownloadedFiles <- sort(dir(path = "./books/", pattern = "pg.*txt"))
 
 for (fi in listOfDownloadedFiles) {
   
