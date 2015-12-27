@@ -1,6 +1,7 @@
 ---
 title: "InnoDB Full text Search hacking with Shiny/R"
 author: "Emanuel Calvo"
+company: "Pythian"
 date: "December 22, 2015"
 output: html_document
 runtime: shiny
@@ -220,22 +221,24 @@ NOTE: distance operator not yet supported.
                                       choices = c("WITH QUERY EXPANSION", "IN BOOLEAN MODE", "IN NATURAL LANGUAGE MODE"), selected = "WITH QUERY EXPANSION"),
                           textInput("filtering", "FTS Filter:", "default"),
                           submitButton("Stats!"),
-                          # uiOutput('tableStat'),
-                          uiOutput('table')
+                          # uiOutput('tableResults'),
+                          uiOutput('table'),
+                          uiOutput('tableResults')
                           )
                        ))
 
         server <- function(input, output, session) {
                 
-                #DataStat = reactive({
-                #  sql <- paste()
-                #  
-                #  rs <- dbGetQuery(con, sql)
-                #  return(rs)
-                #  
-                #})
+                DataResults = reactive({
+                   f<-function(x) {as.character(input$filtering)}
+                  sql <- paste("SELECT * FROM bookContentByLine WHERE MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,") LIMIT 10", sep = "")
+                  
+                  rs <- dbGetQuery(con, sql)
+                  return(rs)
+                  
+                })
                 
-                #output$tableStat <- renderTable({DataStat()})
+                output$tableResults <- renderTable({DataResults()})
 
                 Data = reactive({
                   f<-function(x) {as.character(input$filtering)}
@@ -311,6 +314,10 @@ with the occurrence.
 - `OPTIMIZE TABLE` does a rebuild of the table. To avoid this, set `innodb_optimize_fulltext_only=1` in order to do an incremental
   maintance on the table.
 - Recall that NATURAL LANGUAGE MODE does not take the operands as the BOOLEAN MODE.
+- If you want to have the results ordered by the last FTS expression in the WHERE clause, don't use `ORDER BY`, as MySQL
+  forcely does an order internally. 
+- Try to don't use more than one FTS expression in the where clause. Keep in mind that this affects the order in the results and
+  it consumes a considerably amount of CPU.
 
 
 
