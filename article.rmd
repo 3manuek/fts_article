@@ -171,20 +171,22 @@ Following stats are from the bookContent table (which has an average length of `
 
 ## Playing with searches
 
+The following form will allow you to search across the stats over the tables of the filtering provided dynamically. 
 
-The following form will allow you to search across the stats over the tables
-of the filtering provided dynamically. 
+The aggregations shown on the results are over the results using the selected algorithm. The aggregations over
+the query expansion ranks are only against the results, not all the rows.
 
-Keep in mind that the numbers are not meaningful as we can't compare rankings
-between `query extension` and `boolean`. 
 
 ```{r, echo=FALSE}
         ui <- shinyUI(fluidPage(
-                mainPanel(textInput("filtering", "FTS Filter:", "default"),
+                mainPanel(  
+                          selectInput("ftsMode", label = "Algorithm:",
+                                      choices = c("WITH QUERY EXPANSION", "IN BOOLEAN MODE", "IN NATURAL LANGUAGE MODE"), selected = "WITH QUERY EXTENSION"),
+                          textInput("filtering", "FTS Filter:", "default"),
                           submitButton("Stats!"),
                           uiOutput('table')
                           )
-        ))
+                       ))
 
         server <- function(input, output, session) {
                  
@@ -192,35 +194,40 @@ between `query extension` and `boolean`.
                   f<-function(x) {as.character(input$filtering)}
                   
                       sql <- paste("SELECT sourceTable, 
-                                      sum(scoreBoolean) as sumBoolean, 
-                                      sum(scoreQE) as sumQE,
                                       max(scoreBoolean) as maxBoolean,
-                                      max(scoreQE) as maxBoolean,
+                                      max(scoreQE) as maxQE,
+                                      max(scoreNL) as maxNL,
                                       avg(scoreBoolean) as avgBoolean, 
                                       avg(scoreQE) as avgQE,
-                                      avg(lengthContent) avgLength,
-                                      avg(scoreQE) / count(sourceTable) as weight,
+                                      avg(scoreNL) as avgNL,
+                                      avg(lengthContent) avgFieldLength,
+                                      -- avg(scoreQE) / count(sourceTable) as weight,
                                       count(sourceTable) as countOccurrences
                               FROM
                               (
                               SELECT \"byParagraph\" as sourceTable, 
-                                    FTS_DOC_ID, match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
-                                     match(BC.content) 
+                                    FTS_DOC_ID, 
+                                    match(BC.content) against (\"" ,f(x) ," \" IN BOOLEAN MODE) as scoreBoolean,
+                                    match(BC.content) 
                                         against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+                                    match(BC.content) 
+                                        against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE) scoreNL,
                                      length(content) as lengthContent
                               FROM    bookContent BC
                               WHERE
-                                match(BC.content) against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+                                match(BC.content) against (\"" ,f(x)," \" ",input$ftsMode,")
                               UNION
                               SELECT \"byLine\" as sourceTable, 
                                       FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
                                      match(BL.content) 
                                       against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
+                                    match(BL.content) 
+                                        against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE) scoreNL,
                                      length(content) as lengthContent
                               FROM
                                       bookContentByLine BL
                               WHERE
-                                match(BL.content) against (\"", f(x) ,"\" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION)
+                                match(BL.content) against (\"", f(x) ,"\" ",input$ftsMode,")
                               ) unionTable
                               GROUP BY sourceTable
                               ;" , sep = "")
@@ -282,6 +289,19 @@ Note the use of the `height` parameter to determine how much vertical space the 
 You can also use the `shinyApp` function to define an application inline rather then in an external directory.
 
 In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+
+### Fine tuning
+
+[Fine tuning](https://dev.mysql.com/doc/refman/5.7/en/fulltext-fine-tuning.html)
+
+
+### Maintenance
+
+[innodb_optimize_fulltext_only](https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_optimize_fulltext_only)
+
+### Parsers internals
+
+[Writting FTS parser plugins](https://dev.mysql.com/doc/refman/5.7/en/writing-full-text-plugins.html)
 
 
 
