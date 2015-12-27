@@ -179,6 +179,8 @@ sapply(listOfLoadFilesLine, loadFilesLine)
 
 dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContent(content);")
 dbGetQuery(con, "CREATE FULLTEXT INDEX ftscontent ON bookContentByLine(content);")
+dbGetQuery(con, "CREATE INDEX ftsbookid ON bookContent(bookid);")
+dbGetQuery(con, "CREATE INDEX ftsbookid ON bookContentByLine(bookid);")
 
 ### Turning down the music
 dbDisconnect(con)

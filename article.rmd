@@ -168,6 +168,25 @@ Following stats are from the bookContent table (which has an average length of `
 > In the example shown before the is no intention to compare ranks score as they are based in different algorithms. 
 > The idea there is to show that QUERY EXPANSION can have non desire results in some cases due to its mechanism.
 
+## Stats 
+
+```{r, echo=FALSE}
+
+sql <- "SELECT bp.bookid, round(avg(length(bp.content))) as avgLength, round(STD(length(bp.content))) as stdLength 
+            FROM bookContent bp  
+            GROUP BY bookid;"
+rs <- dbGetQuery(con, sql)
+return(rs)
+
+
+sql <- "SELECT bl.bookid, round(avg(length(bl.content))) as avgLength, round(STD(length(bl.content))) as stdLength 
+            FROM  bookContentByLine bl 
+            GROUP BY bookid;"
+rs <- dbGetQuery(con, sql)
+return(rs)
+```
+
+
 
 ## Playing with searches
 
@@ -175,6 +194,8 @@ The following form will allow you to search across the stats over the tables of 
 
 The aggregations shown on the results are over the results using the selected algorithm. The aggregations over
 the query expansion ranks are only against the results, not all the rows.
+
+You can start trying `-country +president` in boolean mode.
 
 
 ```{r, echo=FALSE}
@@ -184,22 +205,33 @@ the query expansion ranks are only against the results, not all the rows.
                                       choices = c("WITH QUERY EXPANSION", "IN BOOLEAN MODE", "IN NATURAL LANGUAGE MODE"), selected = "WITH QUERY EXTENSION"),
                           textInput("filtering", "FTS Filter:", "default"),
                           submitButton("Stats!"),
+                          # uiOutput('tableStat'),
                           uiOutput('table')
                           )
                        ))
 
         server <- function(input, output, session) {
-                 
+                
+                #DataStat = reactive({
+                #  sql <- paste()
+                #  
+                #  rs <- dbGetQuery(con, sql)
+                #  return(rs)
+                #  
+                #})
+                
+                #output$tableStat <- renderTable({DataStat()})
+
                 Data = reactive({
                   f<-function(x) {as.character(input$filtering)}
                   
                       sql <- paste("SELECT sourceTable, 
                                       max(scoreBoolean) as maxBoolean,
                                       max(scoreQE) as maxQE,
-                                      max(scoreNL) as maxNL,
+                                      -- max(scoreNL) as maxNL,
                                       avg(scoreBoolean) as avgBoolean, 
                                       avg(scoreQE) as avgQE,
-                                      avg(scoreNL) as avgNL,
+                                      -- avg(scoreNL) as avgNL,
                                       avg(lengthContent) avgFieldLength,
                                       -- avg(scoreQE) / count(sourceTable) as weight,
                                       count(sourceTable) as countOccurrences
@@ -237,8 +269,8 @@ the query expansion ranks are only against the results, not all the rows.
                       
                 })
                         
-                        output$table <- renderTable({Data()})
-                                
+                output$table <- renderTable({Data()})
+                      
         }
 
 shinyApp(ui = ui, server = server)
