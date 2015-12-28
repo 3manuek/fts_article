@@ -26,10 +26,15 @@ for(con in all_cons) dbDisconnect(con)
 
 
 # You do not want clear passwords, but is a sandbox.
+#con <- dbConnect(MySQL(), 
+#                 user="msandbox", password="msandbox", port=14901 
+#                 ,dbname="test", socket="/tmp/mysql_sandbox14901.sock", 
+#                 host="127.0.0.1")
+
 con <- dbConnect(MySQL(), 
-                 user="msandbox", password="msandbox", port=14901 
-                 ,dbname="test", socket="/tmp/mysql_sandbox14901.sock", 
-                 host="127.0.0.1")
+                 user="ftsinnodb", password="elfilete", port=3306 
+                 ,dbname="ftsinnodb", #socket="/tmp/mysql_sandbox14901.sock", 
+                 host="db4free.net")
 
 
 ```
@@ -48,6 +53,8 @@ Author: Emanuel Calvo
 Company: Pythian
 
 Thanks to Valerie Parham-Thompson @ Pythian and Daniel Prince @ Oracle.
+
+Thanks db4free.net for the MySQL free online database!
 
 ## Requirements
 
