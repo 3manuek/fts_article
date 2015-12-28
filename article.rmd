@@ -204,6 +204,7 @@ Following stats are from the bookContent table (which has an average length of `
 - If you plan to order by rank, it is not necessary to specify the clause `ORDER BY` as MySQL does the order forcelly internally. Also,
   the behavior is different from the default as it returns the heaviest at the top (like ORDER BY rank DESC).
 - If you come from MyISAM's FTS implementation, recall that the ranking scoring is different.
+- Create the FULLTEXT index after the data is loaded [InnoDB bulk load](http://dev.mysql.com/doc/refman/5.7/en/optimizing-innodb-bulk-data-loading.html). When restoring FTS backups, you will probably hit the "ERROR 182 (HY000) at line nn: Invalid InnoDB FTS Doc ID".
 - Try to don't use more than one FTS expression in the where clause. Keep in mind that this affects the order in the results and
   it consumes a considerably amount of CPU. MySQL orders by the latest expression in the WHERE clause. [WL#7123](https://dev.mysql.com/worklog/task/?id=7123)
 - Also, if avoiding the rank information in the projection (SELECT clause) and using other aggregations like count(*), will use
