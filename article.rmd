@@ -315,9 +315,11 @@ NOTE: distance operator not yet supported.
                 
                 DataResults = reactive({
                    f<-function(x) {as.character(input$filtering)}
-                  sql <- paste("SELECT * FROM bookContentByLine WHERE MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,") ", sep = "")
+                  sql <- paste("SELECT FTS_DOC_ID, bookid, 
+                              MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,"), content 
+                              FROM bookContentByLine WHERE MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,") LIMIT 50", sep = "")
                   
-                  rs <- head(dbGetQuery(con, sql), 50)
+                  rs <- dbGetQuery(con, sql)
                   return(rs)
                   
                 })
