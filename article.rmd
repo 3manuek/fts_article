@@ -33,7 +33,7 @@ for(con in all_cons) dbDisconnect(con)
 
 con <- dbConnect(MySQL(), 
                  user="ftsinnodb", password="elfilete", port=3306 
-                 ,dbname="ftsinnodb", #socket="/tmp/mysql_sandbox14901.sock", 
+                 ,dbname="ftsinnodb", #socket="/tmp/mysql_sandbox14901.sock",
                  host="db4free.net")
 
 
