@@ -17,13 +17,14 @@ library(shiny)
 require(RMySQL)
 library(ggplot2)
 
-#Comment if you want to avoid reload all the data
+# Comment if you want to avoid reload all the data
+# If you want to start from scratch, uncomment the following line.
+# Otherwise, you can restore the dumps located in the dumps folder
 #source('~/fts_article/load.R')
 
 # Yeah, only for development environements
 all_cons <- dbListConnections(MySQL())
 for(con in all_cons) dbDisconnect(con)
-
 
 # You do not want clear passwords, but is a sandbox.
 #con <- dbConnect(MySQL(), 
@@ -35,7 +36,6 @@ con <- dbConnect(MySQL(),
                  user="ftsinnodb", password="elfilete", port=3306 
                  ,dbname="ftsinnodb", #socket="/tmp/mysql_sandbox14901.sock",
                  host="db4free.net")
-
 
 ```
 
