@@ -56,6 +56,12 @@ dbGetQuery(con, "CREATE TABLE IF NOT EXISTS bookContentByLine
                    content text
                  ); ")
 
+# Other way to create the table within other PK:
+# node1 [localhost] {msandbox} (test) > CREATE TABLE test (  FTS_DOC_ID bigint unsigned  AUTO_INCREMENT, kk bigint, other text, PRIMARY KEY(kk),UNIQUE(FTS_DOC_ID));
+# Query OK, 0 rows affected (0,08 sec)
+
+
+
 #vector of ids for book downloading
 #randids <- abs(round(rnorm(opts$books)*1000))
 
