@@ -8,9 +8,11 @@ runtime: shiny
 
 
 ```{r init, message = FALSE, echo=FALSE}
+library(png)
 #options(width = 9999)
-#knitr::opts_chunk$set(width=9999)
+knitr::opts_chunk$set(fig.width=9999)
 # opts_chunk$set(fig.width=9999) #, fig.height=6))
+
 
 library(knitr)
 library(shiny)
