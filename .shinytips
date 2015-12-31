@@ -1,4 +1,25 @@
 
+CREATE TABLE IF NOT EXISTS bookContent
+                 (
+                   FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
+                   bookid bigint, 
+                   content text
+                 ); 
+                 
+
+
+CREATE TABLE IF NOT EXISTS bookContentByLine
+                 (
+                   FTS_DOC_ID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
+                   bookid bigint, 
+                   content text
+                 ); 
+                 
+
+
+
+
+
 ---------------------- FROM HERE ONLY TRASH TO BE REMOVED -----------------------------
 
 
