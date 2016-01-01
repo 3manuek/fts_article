@@ -117,25 +117,25 @@ SELECT  content, bookid, group_concat(it.POSITION) as pos,
      ORDER BY 4 DESC
      LIMIT 10 ;
 
-+-------------------------------------------------------------------------------+--------+------+--------+----------+
-| content                                                                       | bookid | pos  | QERank | BoolRank |
-+-------------------------------------------------------------------------------+--------+------+--------+----------+
-| "country in September, migrating into Holland, and leave their mates behind"  |  15707 | 1    |    105 |        7 |
-| "unsatisfied desire to serve his country, the two prevalent enthusiasms at"   |  15707 | 33   |     98 |        7 |
-| "Language, Vol. I. p. 212. In this country, where four or five horses travel" |  15707 | 35   |     93 |        7 |
-| "inflicting immense damage upon the country. Whereupon the Florentines"       |   1232 | 36   |     89 |        7 |
-| "made for a country of twenty or thirty millionsâ€™ population, can be laid"  |  39064 | 12   |     89 |        7 |
-| "The spiders of this country manufacture nets of various forms, adapted to"   |  15707 | 21   |     87 |        7 |
-| "a velvet-covered arm-chair at my head! This country is too decadent"         |  33415 | 45   |     86 |        7 |
-| "country may be ennobled, and under its auspices may be verified that"        |   1232 | 1    |     84 |        7 |
-| "name. The writer of this unpublished pamphlet sees his country in a"         |  39064 | 56   |     84 |        7 |
-| "In our country, Mr. Pennant informs us, that some quails migrate, and"       |  15707 | 8    |     83 |        7 |
-| "all the morning in passing over the adjacent country." (Voyage to Senegal,"  |  15707 | 46   |     82 |        7 |
-| "the electoral system of the country. Immediately an outcry burst out"        |  39064 | 29   |     82 |        7 |
-| "country, under a most excellent president, wherein all cities had their"     |   1232 | 1    |     81 |        7 |
-| "Though in this country horses shew little vestiges of policy, yet in the"    |  15707 | 16   |     81 |        7 |
-| "country districts. As Lucca had five gates, he divided his own country"      |   1232 | 1,63 |     80 |       14 |
-+-------------------------------------------------------------------------------+--------+------+--------+----------+
++-----------------------------------------------------------------------------+--------+-----+--------+--------+
+|content                                                                      | bookid | pos | QERank |BoolRank|
++-----------------------------------------------------------------------------+--------+-----+--------+--------+
+|"country in September, migrating into Holland, and leave their mates behind" |  15707 | 1   |    105 |      7 |
+|"unsatisfied desire to serve his country, the two prevalent enthusiasms at"  |  15707 | 33  |     98 |      7 |
+|"Language, Vol. I. p. 212. In this country, where four or five horses travel"|  15707 | 35  |     93 |      7 |
+|"inflicting immense damage upon the country. Whereupon the Florentines"      |   1232 | 36  |     89 |      7 |
+|"made for a country of twenty or thirty millionsâ€™ population, can be laid" |  39064 | 12  |     89 |      7 |
+|"The spiders of this country manufacture nets of various forms, adapted to"  |  15707 | 21  |     87 |      7 |
+|"a velvet-covered arm-chair at my head! This country is too decadent"        |  33415 | 45  |     86 |      7 |
+|"country may be ennobled, and under its auspices may be verified that"       |   1232 | 1   |     84 |      7 |
+|"name. The writer of this unpublished pamphlet sees his country in a"        |  39064 | 56  |     84 |      7 |
+|"In our country, Mr. Pennant informs us, that some quails migrate, and"      |  15707 | 8   |     83 |      7 |
+|"all the morning in passing over the adjacent country." (Voyage to Senegal," |  15707 | 46  |     82 |      7 |
+|"the electoral system of the country. Immediately an outcry burst out"       |  39064 | 29  |     82 |      7 |
+|"country, under a most excellent president, wherein all cities had their"    |   1232 | 1   |     81 |      7 |
+|"Though in this country horses shew little vestiges of policy, yet in the"   |  15707 | 16  |     81 |      7 |
+|"country districts. As Lucca had five gates, he divided his own country"     |   1232 | 1,63|     80 |     14 |
++-----------------------------------------------------------------------------+--------+-----+--------+--------+
 15 rows in set (1,16 sec)
 
 ```
