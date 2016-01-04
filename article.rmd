@@ -1,7 +1,7 @@
 ---
-title: "InnoDB Full text Search hacking with Shiny/R"
+title: "InnoDB's Full Text Search Dynamic article with Shiny/R"
 author: "Emanuel Calvo - Pythian"
-date: "December 22, 2015"
+date: "January 3rd, 2016"
 output: html_document
 runtime: shiny
 ---
@@ -324,13 +324,12 @@ TODO: Check index sizes
   Generally, scores lower than 1 can be ignored when using boolean or natural mode searches.
 - `OPTIMIZE TABLE` does a rebuild of the table. To avoid this, set `innodb_optimize_fulltext_only=1` in order to do an incremental
   maintance on the table.
-- Recall that NATURAL LANGUAGE MODE does not take the operands as the BOOLEAN MODE.
-- If you plan to order by rank, it is not necessary to specify the clause `ORDER BY` as MySQL does the order forcelly internally. Also,
-  the behavior is different from the default as it returns the heaviest at the top (like ORDER BY rank DESC).
+- Recall that NATURAL LANGUAGE MODE does not take the operands as the BOOLEAN MODE. This affects the ranking score (try __+bad (<feeling >thing)__ i.e.)
+- If you plan to order by rank, it is not necessary to specify the clause `ORDER BY` as InnoDB does the order after retrieve the doc ids . Also,the behavior is different from the default as it returns the heaviest at the top (like an __ORDER BY rank DESC__).
 - If you come from MyISAM's FTS implementation, recall that the ranking scoring is different.
 - Create the FULLTEXT index after the data is loaded [InnoDB bulk load](http://dev.mysql.com/doc/refman/5.7/en/optimizing-innodb-bulk-data-loading.html). When restoring FTS backups, you will probably hit the "ERROR 182 (HY000) at line nn: Invalid InnoDB FTS Doc ID".
-- Try to don't use more than one FTS expression in the where clause. Keep in mind that this affects the order in the results and
-  it consumes a considerably amount of CPU. MySQL orders by the latest expression in the WHERE clause. [WL#7123](https://dev.mysql.com/worklog/task/?id=7123)
+- Try to avoid using use more than one FTS expression in the where clause. Keep in mind that this affects the order in the results and
+  it consumes a considerably amount of CPU. InnoDB orders by the latest expression in the WHERE clause. [WL#7123](https://dev.mysql.com/worklog/task/?id=7123)
 - Also, if avoiding the rank information in the projection (SELECT clause) and using other aggregations like `count(*)`, will use
   the "no ranking" FT_hints. The `limit` hint won't be used if invoked explicitely an `ORDER BY` and th `MATCH` clause in the projection.
 
@@ -433,7 +432,7 @@ NOTE: distance operator not yet supported.
                 DataResults = reactive({
                    f<-function(x) {as.character(input$filtering)}
                   sql <- paste("SELECT FTS_DOC_ID, bookid,
-                              MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,"), content
+                              MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,") as rankScore, content
                               FROM bookContentByLine WHERE MATCH(content) AGAINST(\"" ,f(x)," \" ",input$ftsMode,") LIMIT 50", sep = "")
 
                   rs <- dbGetQuery(con, sql)
@@ -449,10 +448,10 @@ NOTE: distance operator not yet supported.
                       sql <- paste("SELECT sourceTable,
                                       max(scoreBoolean) as maxBoolean,
                                       max(scoreQE) as maxQE,
-                                      -- max(scoreNL) as maxNL,
+                                      max(scoreNL) as maxNL,
                                       avg(scoreBoolean) as avgBoolean,
                                       avg(scoreQE) as avgQE,
-                                      -- avg(scoreNL) as avgNL,
+                                      avg(scoreNL) as avgNL,
                                       avg(lengthContent) avgFieldLength,
                                       -- avg(scoreQE) / count(sourceTable) as weight,
                                       count(sourceTable) as countOccurrences
@@ -474,7 +473,7 @@ NOTE: distance operator not yet supported.
                                       FTS_DOC_ID, match(BL.content) against (\"",f(x)," \" IN BOOLEAN MODE) as scoreBoolean,
                                      match(BL.content)
                                       against (\"" ,f(x)," \" IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) scoreQE,
-                                    match(BL.content)
+                                    match(BL.content) 
                                         against (\""  ,f(x), "\" IN NATURAL LANGUAGE MODE) scoreNL,
                                      length(content) as lengthContent
                               FROM
