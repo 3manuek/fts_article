@@ -32,8 +32,8 @@ for(con in all_cons) dbDisconnect(con)
 
 # You do not want clear passwords, but is a sandbox.
 con <- dbConnect(MySQL(), 
-                 user="msandbox", password="msandbox", port=14901 
-                 ,dbname="test", socket="/tmp/mysql_sandbox14901.sock", 
+                 user="msandbox", password="msandbox", port=13454 
+                 ,dbname="test", socket="/tmp/mysql_sandbox13454.sock", 
                  host="127.0.0.1")
 # on.exit(dbDisconnect(con))
 
