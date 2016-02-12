@@ -307,6 +307,16 @@ TODO: Check index sizes
 > In the example shown before the is no intention to compare ranks score as they are based in different algorithms.
 > The idea there is to show that QUERY EXPANSION can have non desire results in some cases due to its mechanism.
 
+### Going ahead on choosing stop words
+
+The full [article](https://en.wikipedia.org/wiki/Zipf's_law) is amazingly interesting. In a brief, it says that
+the most frequent word will occur approximately twice as often as the second most frequent word, three times as 
+often as the third most frequent word, and so on (rank-frequency distribution is an inverse relation).
+
+The idea here is to measure how much index do we safe cutting those words that are extremely frequent and don't add
+a necessary meaning to the search. 
+
+
 
 ## Considerations and recommendations 
 
@@ -360,7 +370,7 @@ TODO: Check index sizes
         Extra: Using where; Ft_hints: no_ranking
 
 ```
-- If you plan to use FTS_DOC_ID column with AUTO_INCREMENT option, have in mind that there is a limitation regarding this.You must
+- If you plan to use `FTS_DOC_ID` column with AUTO_INCREMENT option, have in mind that there is a limitation regarding this.You must
   declare a single column PRIMARY KEY constraint or as an UNIQUE index. Also, the data type is stricted as `bigint unsigned`. I.e:
 
 ```
