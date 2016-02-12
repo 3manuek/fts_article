@@ -502,9 +502,17 @@ Now that you can see the general stats, we'll see how much noise has been added 
 To do that,  we'll gather all the occurrences using the query extension option and extract only the ones that match
 with the occurrence.
 
+### FT_QUERY_EXPANSION_LIMIT
+
+This variable controls the number of top matches when using `WITH QUERY EXPANSION` (affects only MyISAM). 
+
+[reference](http://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_ft_query_expansion_limit)
+
+
 
 ### Bug
 
+Submitted https://bugs.mysql.com/bug.php?id=80347
 
 
 ```
