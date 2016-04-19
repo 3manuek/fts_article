@@ -1,0 +1,9 @@
+---
+- name: install the nginx rpm from a remote repo
+  yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+  
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: install MySQL 5.7
+  yum: name=mysql-community-common state=present  
