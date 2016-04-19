@@ -1,5 +1,5 @@
 ---
-title: "InnoDB's Full Text Search Dynamic article with Shiny/R"
+title: "InnoDB's Full Text Search overview (with Shiny/R)"
 author: "Emanuel Calvo - Pythian"
 date: "January 3rd, 2016"
 output: html_document
@@ -43,8 +43,6 @@ con <- dbConnect(MySQL(),
 
 ## Version
 
- **BETA - NOT FINAL**
-
 This R Markdown document is made interactive using Shiny. Unlike the more traditional
 workflow of creating static reports, you can now create documents that allow your
 readers to change the assumptions underlying your analysis and see the results immediately.  
@@ -59,7 +57,6 @@ Company: Pythian
 
 Thanks to Valerie Parham-Thompson @ Pythian and Daniel Prince @ Oracle.
 
-Thanks db4free.net for the MySQL free online database!
 
 ## Requirements
 
