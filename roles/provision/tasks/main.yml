@@ -27,3 +27,14 @@
 
 # DEBIAN
 # r-base git 
+# https://github.com/trevorld/optparse
+# sudo pip install rst2pdf
+# sudo su - -c "R -e \"install.packages('shiny', repos = 'http://cran.rstudio.com/')\""
+# sudo apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
+# sudo su - -c "R -e \"install.packages('devtools', repos='http://cran.rstudio.com/')\""
+# sudo su - -c "R -e \"devtools::install_github('trevorld/optparse')\""
+# sudo apt-get install libmysqlclient20 libmysqlclient-dev
+install.packages('stringr')
+install.packages('RMySQL')
+  
+
