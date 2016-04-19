@@ -1,9 +1,29 @@
 ---
 - name: install the nginx rpm from a remote repo
   yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+
+- name: install rlang repository configuration
+  yum: name=http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm state=present
   
 - name: upgrade all packages
   yum: name=* state=latest
 
 - name: install MySQL 5.7
   yum: name=mysql-community-common state=present  
+# install  textlive tcl
+
+- name: install R language
+  yum: name=R state=present
+  
+# CRAN: https://cran.r-project.org/bin/linux/redhat/README
+# http://stackoverflow.com/questions/24708213/install-r-on-redhat-errors-on-dependencies-that-dont-exist
+#http://superuser.com/questions/841270/installing-r-on-rhel-7
+# /etc/yum.repos.d/redhat.repo add:
+# [epel]
+# enable = 1
+
+
+#sudo yum localinstall *.rpm --skip-broken
+
+# DEBIAN
+# r-base git 
