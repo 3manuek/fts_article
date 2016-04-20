@@ -1,8 +1,8 @@
 name: FTS_Innodb
 account: 3manuek
 server: shinyapps.io
-bundleId: 342546
-url: https://3manuek.shinyapps.io/FTS_Innodb
-when: 1451868449.73062
+bundleId: 426082
+url: https://3manuek.shinyapps.io/FTS_Innodb/
+when: 1461146271.37064
 asMultiple: FALSE
 asStatic: FALSE
